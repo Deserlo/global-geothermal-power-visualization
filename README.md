@@ -1,1 +1,2 @@
-# global-geothermal-power-visualization
+# Global Geothermal Power Visualization
+
