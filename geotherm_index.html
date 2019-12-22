@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CSC196V - Data Visualization Final Project</title>
+  <meta name="description" content="Using D3v4 to create a Bubble chart. Based on NYT visualization">
+  <meta name="author" content="Jim Vallandingham">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,400i,600" rel="stylesheet">
+  <link rel="stylesheet" href="css/my_reset.css">
+  <link rel="stylesheet" href="css/my_bubble_chart.css">
+</head>
+<body>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="http://d3js.org/topojson.v1.min.js"></script>
+	<script src="src/d3-legend.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.13.0/d3-legend.js"></script>
+    <!-- I recommend you host this file on your own, since this will change without warning -->
+  <script src="src/datamaps.world.min.js"></script>   
+  <div class="container">
+    <h1>Geothermal Energy Production</h1>
+	<h2>An exploration in geothermal electricity generating power plants around the world</h2>
+	<p>Geothermal energy refers to heat from the Earth's core which is a clean energy source with an inexhaustible supply.</p>
+	<p>Geothermal power plants use steam produced from reservoirs of hot water found a few miles or more below the Earth's surface to produce electricity. 
+	The steam rotates a turbine that activates a generator, which produces electricity. 
+	There are three major types of geothermal power plants: dry steam, flash steam, and binary cycle.</p>
+	<div id="toolbar">
+      <a href="#" id="all" class="button active">All Geothermal Power Plants</a>
+	  <a href="#" id="trends" class="button">Geothermal Plants By Major Type and Year Range</a>
+	  <a href="#" id="type" class="button">Geothermal Plants By All Type</a>
+    </div>
+    <div id="vis"></div>
+	<div id="story-trend" style="visibility: hidden; margin-bottom: 10px;">Trends have changed over the years. There were mostly dry stream and flash stations but now there has been
+	a trend toward smaller binary cycle stations.</div>
+	<div class="story">The total installed global capacity of geothermal power plants seems like a lot but not all countries have installed geothermal plants yet. 
+	High upfront costs, geographical location  and other factors all play into this.</div>
+	<h3>Map Of Geo Thermal Power Plants Across The World</h3>
+	<p class="instr">( Hover over a country to see more details.)</p>
+	<div id="container1" style="position: relative; width: 80%; height: 450px; margin-bottom: 24px; margin-top: 16px;"></div>
+	<script>
+	var series = [
+	["USA",3460.95, 166, 92], ["TUR",1138.24, 49, 54],["THA",0.3, 1, 1],["RUS",81.9,5, 8],["ROU",0.05, 1, 1],["PRT",30.5, 4, 6], ["PHL",1845.84, 24, 42],
+	["PNG",56, 1, 1], ["NIC",159, 6,5],["NZL",954.4, 14, 17], ["MEX",972.4, 9, 16], ["KEN",662.5, 22,35], ["JPN",542.133, 23, 42], ["ITA",915.5, 36, 51], ["IDN",1657, 30, 55],
+	["ISL",752.6, 10, 12], ["HUN",3.35, 1,1], ["HND",35, 1, 1], ["GTM",52, 2, 2], ["DEU",38.01, 9, 27], ["FRA",18.1, 3, 6], ["ETH",7.3, 1, 1], ["SLV",204.4, 5, 7], ["CRI",205, 6, 6],
+	["CHN",27.88, 5, 5], ["CHL",48, 1, 2], ["AUT",1.8, 3, 10], ["AUS",1.12, 2, 2]];
+	
+	var dataset = {};
+	var onlyValues = series.map(function(obj){ return  obj[1];});
+    var minValue = Math.min.apply(null, onlyValues),
+            maxValue = Math.max.apply(null, onlyValues);
+	
+	var paletteScale = d3.scale.linear()
+            .domain([minValue,maxValue])
+			//.range(["#EFEFFF","#02386F"]); // blue color
+            .range(['#98FB98',"#043927"]); // blue color
+			
+	series.forEach(function(item){ //
+	var iso = item[0],
+			value = item[1],
+			no_pplants = item[2],
+			no_units = item[3];
+			
+	dataset[iso] = { mw_capacity: value, fillColor: paletteScale(value), no_pplants, no_units };
+	});
+	
+	var map = new Datamap({
+	element: document.getElementById('container1'),
+	projection: 'mercator',
+	fills: {
+		defaultFill: '#F5F5F5',
+		Few: '#98FB98',
+		Some: '#519e62',
+		"A lot": "#043927"
+	},
+	data: dataset,
+	geographyConfig: {
+            borderColor: '#DEDEDE',
+            highlightBorderWidth: 2,
+            // don't change color on mouse hover
+            highlightFillColor: function(geo) {
+                return geo['fillColor'] || '#F5F5F5';
+            },
+            // only change border
+            highlightBorderColor: '#B7B7B7',
+            // show desired information in tooltip
+            popupTemplate: function(geo, data) {
+                // don't show tooltip if country not present in dataset
+                if (!data) { return ; }
+                // tooltip content
+                return ['<div class="hoverinfo">',
+                    '<strong>', geo.properties.name, '</strong>',
+                    '<br>Capacity: <strong>', data.mw_capacity + "(MWe)", '</strong>',
+					'<br>No Power Plants: <strong>', data.no_pplants,'</strong>',
+					'<br>No Units: <strong>', data.no_units, '</strong>',
+                    '</div>'].join('');
+            }
+		}
+		});
+		var l = { 
+			legendTitle: "Number of Power Plants",
+			defaultFillName: "None:",
+			};
+		map.legend(l);
+	</script>
+	<div class="story"> Even though some areas like the United States Of America and Indonesia host a large number of power plants with relatively large total capacities,
+	their shares of generation capacity are quite small.</div>
+	<h3>Countries generating less than 5% of their electricity from geothermal sources</h3>
+	<div style="margin-bottom: 16px; margin-top: 16px;"><img src="images/share_of_national_gen_2.png"/></div>
+	<div class="story">The good news is that some countries have been able to produce a large percentage of their electricity from geothermal.</div>
+	<h3>Countries generating about 15 percent or more of their electricity from geothermal sources</h3>
+	<div><img src="images/share_of_national_generation.png"/></div>
+	<div class="story">The current trend of geothermal energy shows more and more countries are realizing the huge potential for geothermal energy production.</div>
+	<h3>Number Of Installed Power Plant Units Over Years 1958-2017</h3>
+	<div><img src="images/global_trend.png"/></div>
+	<div class="story">Another look shows the cumulative installed capacity growing every year.</div>
+	<h3>Cumulative Energy Capacity Over Years 1958-2017</h3>
+	<div><img src="images/cumulative_trend.png"/></div>
+	<div class = "story">Projections for future geothermal energy production are varied but all estimate increasing further energy production in geothermal heat
+	across the world as our needs for electricity grow, increased focus on renewable sources and advances in drilling and turbine technology continue.</div>
+	<div id ="end">
+	<h2 style="text-decoration: underline;">Sources</h2>
+    <h2>Data</h2>
+	<p>The Joint Research Centre (JRC) is the European Commission science and knowledge service which has been updating the geothermal powerplant database since 2014.
+	Each entry in this dataset holds various attributes such as powerplant name, initial installed capacity, powerplant status, region, country, continent, installed year,
+	turbine type, turbine manufacturer, powerplant owner name, as well as reservoir information.</p>  
+	<p><a href="http://data.europa.eu/89h/jrc-10128-10001" target='_blank'>JRC Geothermal Power Plant Dataset</a></p>
+	<p>I also used supplemental data provided from Wikipedia on installed geothermal electric capacity.</p>
+	<p><a href="https://en.wikipedia.org/wiki/Geothermal_power" target='_blank'>Geothermal Power Wiki Data</a></p>
+	<p>Works Cited: </p>
+	<p>Geothermal Electricity Production Basics | NREL, www.nrel.gov/research/re-geo-elec-production.html.</p>
+	<h2>About</h2>
+	<p>My name is Eva Najera and I created this project for the CSc 196V Data Visualization course at California State University, Sacramento, Ca within the College of 
+	Engineering and Computer Science.</p>
+  </div>
+  </div>
+<script src="//d3js.org/d3.v4.min.js"></script>
+  <script src="src/geo_tooltip.js"></script>
+  <script src="src/geo_bubble_chart.js"></script>  
+</body>
+</html>
